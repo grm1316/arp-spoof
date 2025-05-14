@@ -112,7 +112,7 @@ Mac get_mac(pcap_t* handle, Mac my_mac, Ip my_ip, Ip target_ip) {
     }
     return Mac::nullMac();
 }
-
+//ARP 헤더의 구조 (총 28바이트)
 void send_arp_spoof(pcap_t* handle, Mac my_mac, Mac sender_mac, Ip sender_ip, Ip target_ip) {
     EthArpPacket packet;
     packet.eth_.dmac_ = sender_mac;
@@ -183,7 +183,7 @@ void monitor_arp(pcap_t* handle, Mac my_mac, std::vector<FlowInfo>& flows) {
     struct pcap_pkthdr* header;
     const u_char* packet;
 
-    while (true) {
+    while (true) {  
         int res = pcap_next_ex(handle, &header, &packet);
         if (res == 0) continue;
         if (res == -1 || res == -2) break;
@@ -191,7 +191,7 @@ void monitor_arp(pcap_t* handle, Mac my_mac, std::vector<FlowInfo>& flows) {
         EthArpPacket* arp_packet = (EthArpPacket*)packet;
         if (ntohs(arp_packet->eth_.type_) != EthHdr::Arp) continue;
 
-        // ARP 복구 시도 감지 및 재감염
+        // ARP 복구 시도 감지 및 재감염 //target_ip가 sender_ip에게 보내는 ARP 패킷인지 확인 하는 과정
         for (const auto& flow : flows) {
             if (ntohl(arp_packet->arp_.sip_) == flow.target_ip &&
                 ntohl(arp_packet->arp_.tip_) == flow.sender_ip) {
